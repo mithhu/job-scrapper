@@ -1,21 +1,33 @@
-const { GoogleSpreadsheet } = require("google-spreadsheet");
+const Sheet = require("./sheet");
+const fetch = require("node-fetch");
 
-// spreadsheet key is the long id in the sheets URL
-const doc = new GoogleSpreadsheet(
-  "1Pg6k5pcmnPAn-YBJRc0DVHNdt7EgfwlUrJefLI_UKH8"
-);
+async function scrapePage(i) {
+  const res = await fetch(
+    `https://jobs.github.com/positions.json?description=code&page=${i}`
+  );
+  const json = await res.json();
+  const rows = json.map((job) => {
+    return {
+      company: job.company,
+      title: job.title,
+      location: job.location,
+      date: job.created_at,
+      url: job.url,
+    };
+  });
+  return rows;
+}
 
 (async function () {
-  await doc.useServiceAccountAuth(require("./credentials.json"));
-  await doc.loadInfo(); // loads document properties and worksheets
-  console.log(doc.title);
-  await doc.updateProperties({ title: "renamed doc" });
-
-  // const sheet = doc.sheetsByIndex[0]; // or use doc.sheetsById[id]
-  // console.log(sheet.title);
-  // console.log(sheet.rowCount);
-
-  // // adding / removing sheets
-  // const newSheet = await doc.addSheet({ title: "hot new sheet!" });
-  // await newSheet.delete();
+  let i = 1;
+  let rows = [];
+  while (true) {
+    const newRows = await scrapePage(i);
+    if (newRows.length === 0) break;
+    rows = rows.concat(newRows);
+    i++;
+  }
+  const sheet = new Sheet();
+  await sheet.load();
+  await sheet.addRows(rows);
 })();
