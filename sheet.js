@@ -1,15 +1,15 @@
 const { GoogleSpreadsheet } = require("google-spreadsheet");
+require("dotenv").config();
 
 module.exports = class Sheet {
   constructor() {
     // spreadsheet key is the long id in the sheets URL
-    this.doc = new GoogleSpreadsheet(
-      "1Pg6k5pcmnPAn-YBJRc0DVHNdt7EgfwlUrJefLI_UKH8"
-    );
+    this.doc = new GoogleSpreadsheet(process.env.GOOGLE_CLOUD_KEY);
   }
+
   async load() {
     await this.doc.useServiceAccountAuth(require("./credentials.json"));
-    await this.doc.loadInfo(); // loads document properties and worksheets}
+    await this.doc.loadInfo(); // loads document properties and worksheets}`
   }
 
   async addRows(rows) {
